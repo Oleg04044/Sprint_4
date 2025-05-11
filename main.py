@@ -1,5 +1,4 @@
 class BooksCollector:
-
     def __init__(self):
         self.books_genre = {}
         self.favorites = []
