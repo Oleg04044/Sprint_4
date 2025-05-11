@@ -81,3 +81,4 @@ class TestBooksCollector:
         assert collector.get_list_of_favorites_books() == []
         assert collector.genre == ['Фантастика', 'Ужасы', 'Детективы', 'Мультфильмы', 'Комедии']
         assert collector.genre_age_rating == ['Ужасы', 'Детективы']
+
