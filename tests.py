@@ -57,28 +57,44 @@ class TestBooksCollector:
         assert 'Метро 2033' in result
         assert 'Оно' not in result
 
-    # Тесты для работы с избранным
-    def test_add_book_to_favorites(self, collector_with_books):
+    def test_add_book_to_favorites_success(self, collector_with_books):
         collector_with_books.add_book_in_favorites('Метро 2033')
         assert 'Метро 2033' in collector_with_books.get_list_of_favorites_books()
 
     def test_add_book_to_favorites_twice(self, collector_with_books):
         collector_with_books.add_book_in_favorites('Метро 2033')
+        initial_count = len(collector_with_books.get_list_of_favorites_books())
         collector_with_books.add_book_in_favorites('Метро 2033')
-        assert len(collector_with_books.get_list_of_favorites_books()) == 1
+        assert len(collector_with_books.get_list_of_favorites_books()) == initial_count
 
-    def test_delete_book_from_favorites(self, collector_with_books):
+    def test_add_non_existent_book_to_favorites(self, collector):
+        collector.add_book_in_favorites('Несуществующая книга')
+        assert len(collector.get_list_of_favorites_books()) == 0
+
+    def test_delete_book_from_favorites_success(self, collector_with_books):
         collector_with_books.add_book_in_favorites('Метро 2033')
         collector_with_books.delete_book_from_favorites('Метро 2033')
         assert 'Метро 2033' not in collector_with_books.get_list_of_favorites_books()
 
-    def test_add_nonexistent_book_to_favorites(self, collector):
-        collector.add_book_in_favorites('Несуществующая книга')
-        assert len(collector.get_list_of_favorites_books()) == 0
+    def test_delete_non_existent_book_from_favorites(self, collector_with_books):
+        initial_favorites = collector_with_books.get_list_of_favorites_books().copy()
+        collector_with_books.delete_book_from_favorites('Несуществующая книга')
+        assert collector_with_books.get_list_of_favorites_books() == initial_favorites
+
+    def test_get_list_of_favorites_books_empty(self, collector):
+        assert collector.get_list_of_favorites_books() == []
+
+    def test_get_list_of_favorites_books_with_items(self, collector_with_books):
+        collector_with_books.add_book_in_favorites('Метро 2033')
+        collector_with_books.add_book_in_favorites('Чебурашка')
+        favorites = collector_with_books.get_list_of_favorites_books()
+        assert len(favorites) == 2
+        assert 'Метро 2033' in favorites
+        assert 'Чебурашка' in favorites
+        assert isinstance(favorites, list)
 
     def test_initial_state(self, collector):
         assert collector.get_books_genre() == {}
         assert collector.get_list_of_favorites_books() == []
         assert collector.genre == ['Фантастика', 'Ужасы', 'Детективы', 'Мультфильмы', 'Комедии']
         assert collector.genre_age_rating == ['Ужасы', 'Детективы']
-

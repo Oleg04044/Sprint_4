@@ -22,4 +22,3 @@ def collector_with_genres(collector_with_books):
     collector_with_books.set_book_genre('Оно', 'Ужасы')
     collector_with_books.set_book_genre('Чебурашка', 'Мультфильмы')
     return collector_with_books
-
