@@ -1,24 +1,100 @@
+import pytest
 from main import BooksCollector
 
-# класс TestBooksCollector объединяет набор тестов, которыми мы покрываем наше приложение BooksCollector
-# обязательно указывать префикс Test
 class TestBooksCollector:
+    @pytest.mark.parametrize('name, expected', [
+        ('Война и мир', True),
+        ('1984', True),
+        ('', False),
+        ('A' * 41, False)
+    ], ids=['valid_name', 'another_valid_name', 'empty_name', 'too_long_name'])
+    def test_add_new_book(self, collector, name, expected):
+        collector.add_new_book(name)
+        assert (name in collector.get_books_genre()) == expected
 
-    # пример теста:
-    # обязательно указывать префикс test_
-    # дальше идет название метода, который тестируем add_new_book_
-    # затем, что тестируем add_two_books - добавление двух книг
-    def test_add_new_book_add_two_books(self):
-        # создаем экземпляр (объект) класса BooksCollector
-        collector = BooksCollector()
+    def test_add_existing_book_not_added(self, collector):
+        collector.add_new_book('Дубровский')
+        collector.add_new_book('Дубровский')
+        assert len(collector.get_books_genre()) == 1
 
-        # добавляем две книги
-        collector.add_new_book('Гордость и предубеждение и зомби')
-        collector.add_new_book('Что делать, если ваш кот хочет вас убить')
+    def test_set_valid_genre_for_existing_book(self, collector_with_books):
+        collector_with_books.set_book_genre('Метро 2033', 'Фантастика')
+        assert collector_with_books.get_book_genre('Метро 2033') == 'Фантастика'
 
-        # проверяем, что добавилось именно две
-        # словарь books_rating, который нам возвращает метод get_books_rating, имеет длину 2
-        assert len(collector.get_books_rating()) == 2
+    def test_set_genre_for_nonexistent_book(self, collector):
+        collector.set_book_genre('Несуществующая книга', 'Фантастика')
+        assert 'Несуществующая книга' not in collector.get_books_genre()
 
-    # напиши свои тесты ниже
-    # чтобы тесты были независимыми в каждом из них создавай отдельный экземпляр класса BooksCollector()
+    def test_set_invalid_genre(self, collector_with_books):
+        collector_with_books.set_book_genre('Метро 2033', 'Несуществующий жанр')
+        assert collector_with_books.get_book_genre('Метро 2033') == ''
+
+    def test_get_genre_for_book_with_genre(self, collector_with_genres):
+        assert collector_with_genres.get_book_genre('Метро 2033') == 'Фантастика'
+
+    def test_get_genre_for_book_without_genre(self, collector_with_books):
+        assert collector_with_books.get_book_genre('Мастер и Маргарита') == ''
+
+    def test_get_genre_for_nonexistent_book(self, collector):
+        assert collector.get_book_genre('Несуществующая книга') is None
+
+    def test_get_books_genre_returns_full_dict(self, collector_with_genres):
+        expected = {
+            'Метро 2033': 'Фантастика',
+            'Оно': 'Ужасы',
+            'Чебурашка': 'Мультфильмы',
+            'Мастер и Маргарита': ''
+        }
+        assert collector_with_genres.get_books_genre() == expected
+
+    def test_get_books_with_specific_genre(self, collector_with_genres):
+        result = collector_with_genres.get_books_with_specific_genre('Фантастика')
+        assert result == ['Метро 2033']
+
+    def test_get_books_for_children(self, collector_with_genres):
+        result = collector_with_genres.get_books_for_children()
+        assert 'Чебурашка' in result
+        assert 'Метро 2033' in result
+        assert 'Оно' not in result
+
+    def test_add_book_to_favorites_success(self, collector_with_books):
+        collector_with_books.add_book_in_favorites('Метро 2033')
+        assert 'Метро 2033' in collector_with_books.get_list_of_favorites_books()
+
+    def test_add_book_to_favorites_twice(self, collector_with_books):
+        collector_with_books.add_book_in_favorites('Метро 2033')
+        initial_count = len(collector_with_books.get_list_of_favorites_books())
+        collector_with_books.add_book_in_favorites('Метро 2033')
+        assert len(collector_with_books.get_list_of_favorites_books()) == initial_count
+
+    def test_add_non_existent_book_to_favorites(self, collector):
+        collector.add_book_in_favorites('Несуществующая книга')
+        assert len(collector.get_list_of_favorites_books()) == 0
+
+    def test_delete_book_from_favorites_success(self, collector_with_books):
+        collector_with_books.add_book_in_favorites('Метро 2033')
+        collector_with_books.delete_book_from_favorites('Метро 2033')
+        assert 'Метро 2033' not in collector_with_books.get_list_of_favorites_books()
+
+    def test_delete_non_existent_book_from_favorites(self, collector_with_books):
+        initial_favorites = collector_with_books.get_list_of_favorites_books().copy()
+        collector_with_books.delete_book_from_favorites('Несуществующая книга')
+        assert collector_with_books.get_list_of_favorites_books() == initial_favorites
+
+    def test_get_list_of_favorites_books_empty(self, collector):
+        assert collector.get_list_of_favorites_books() == []
+
+    def test_get_list_of_favorites_books_with_items(self, collector_with_books):
+        collector_with_books.add_book_in_favorites('Метро 2033')
+        collector_with_books.add_book_in_favorites('Чебурашка')
+        favorites = collector_with_books.get_list_of_favorites_books()
+        assert len(favorites) == 2
+        assert 'Метро 2033' in favorites
+        assert 'Чебурашка' in favorites
+        assert isinstance(favorites, list)
+
+    def test_initial_state(self, collector):
+        assert collector.get_books_genre() == {}
+        assert collector.get_list_of_favorites_books() == []
+        assert collector.genre == ['Фантастика', 'Ужасы', 'Детективы', 'Мультфильмы', 'Комедии']
+        assert collector.genre_age_rating == ['Ужасы', 'Детективы']
